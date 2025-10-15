@@ -315,7 +315,6 @@ TODO 3.7: Display Data:
 END OF LAB INSTRUCTIONS
 ===================================================================
 */
-
 import React, { useState, useEffect } from 'react'
 import { Container, Alert, Spinner } from 'react-bootstrap'
 import UserList from './components/UserList'
@@ -324,21 +323,61 @@ import UserModal from './components/UserModal'
 
 function App() {
   const [users, setUsers] = useState([])
+  const [filteredUsers, setFilteredUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
 
+  // Fetch users from API
   useEffect(() => {
-    {/*API fetch logic*/}
+    const fetchUsers = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/users')
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
+        const data = await response.json()
+        setUsers(data)
+        setFilteredUsers(data)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
 
+    fetchUsers()
   }, [])
 
+  // Filter users when searchTerm or users change
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredUsers(users)
+    } else {
+      const filtered = users.filter(user =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      setFilteredUsers(filtered)
+    }
+  }, [searchTerm, users])
+
+  // Open modal and set selected user
   const handleUserClick = (user) => {
+    setSelectedUser(user)
+    setShowModal(true)
   }
 
+  // Close modal and reset selected user
   const handleCloseModal = () => {
+    setShowModal(false)
+    setSelectedUser(null)
   }
 
   return (
     <div className="app">
-      <header className="py-3 mb-4 mt-5 bg-primary text-white py-3 mb-4 shadow">
+      <header className="bg-primary text-white py-3 mb-4 shadow">
         <Container>
           <h1 className="h2 mb-0">User Management Dashboard</h1>
           <p className="mb-0 opacity-75">Manage and view user information</p>
@@ -346,16 +385,35 @@ function App() {
       </header>
 
       <Container className="py-3 mb-4 mt-5">
-        <SearchBar />
+      <SearchBar 
+  searchTerm={searchTerm} 
+  onSearchChange={(value) => setSearchTerm(value)} 
+/>
 
-        {/* {loading && <Spinner ... />} */}
-        {/* {error && <Alert ...>{error}</Alert>} */}
-        {/* <UserList users={filteredUsers} onUserClick={handleUserClick} /> */}
+        {loading && (
+          <div className="text-center my-4">
+            <Spinner animation="border" role="status" />
+          </div>
+        )}
 
-        <UserModal />
+        {error && (
+          <Alert variant="danger">
+            {error}
+          </Alert>
+        )}
+
+        {!loading && !error && (
+          <UserList users={filteredUsers} onUserClick={handleUserClick} />
+        )}
+
+        <UserModal
+          show={showModal}
+          user={selectedUser}
+          onHide={handleCloseModal}
+        />
       </Container>
 
-      <footer className="py-3 mb-4 mt-5 bg-light py-4 mt-5">
+      <footer className="bg-light py-4 mt-5">
         <Container>
           <p className="text-center text-muted mb-0">
             &copy; 2024 User Management Dashboard
