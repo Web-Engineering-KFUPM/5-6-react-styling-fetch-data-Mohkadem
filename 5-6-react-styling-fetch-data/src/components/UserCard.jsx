@@ -18,7 +18,9 @@ function UserCard({ user, onUserClick }) {
           <strong>Phone:</strong> {user.phone}
         </Card.Text>
       {/* Buttotn*/}
-      
+      <Button onClick={() => onUserClick(user)}>
+        View Details
+      </Button>
       </Card.Body>
     </Card>
   )
